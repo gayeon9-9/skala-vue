@@ -1,3 +1,4 @@
+<!--
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
@@ -25,6 +26,15 @@ import MultiSourceWatch from './components/practices/basic/MultiSourceWatch.vue'
 import DeepWatch from './components/practices/basic/DeepWatch.vue'
 import ReactiveWatch from './components/practices/basic/ReactiveWatch.vue'
 import WatchEffect from './components/practices/basic/WatchEffect.vue'
+import ComponentLifecycleHook from './components/practices/basic/ComponentLifecycleHook.vue'
+import PropsEmitsParent from './components/practices/basic/PropsEmitsParent.vue'
+import PropsEmitsChild from './components/practices/basic/PropsEmitsChild.vue'
+import SlotDefaultParent from './components/practices/basic/SlotDefaultParent.vue'
+import SlotDefaultChild from './components/practices/basic/SlotDefaultChild.vue'
+import SlotNamedParent from './components/practices/basic/SlotNamedParent.vue'
+import SlotNamedChild from './components/practices/basic/SlotNamedChild.vue'
+import SlotScopedParent from './components/practices/basic/SlotScopedParent.vue'
+import SlotScopedChild from './components/practices/basic/SlotScopedChild.vue'
 
 </script>
 
@@ -58,6 +68,15 @@ import WatchEffect from './components/practices/basic/WatchEffect.vue'
       <DeepWatch />
       <ReactiveWatch />
       <WatchEffect />
+      <ComponentLifecycleHook />
+      <PropsEmitsParent />
+      <PropsEmitsChild />
+      <SlotDefaultParent />
+      <SlotDefaultChild />
+      <SlotNamedParent />
+      <SlotNamedChild />
+      <SlotScopedParent />
+      <SlotScopedChild />
 
       <nav>
         <RouterLink to="/">Home</RouterLink>
@@ -131,14 +150,16 @@ nav a:first-of-type {
     margin-top: 1rem;
   }
 }
-</style>
+</style> -->
 
-
-<!-- // 8/19 (과제1 - Weather Mockup)
 <script setup>
-import WeatherMockup from './components/HandsOn/WeatherMockup.vue'
+// import WeatherMockup1 from './components/HandsOn/WeatherMockup1.vue' // 8/19 (과제1 - Weather Mockup)
+// import WeatherComposition from './components/HandsOn/WeatherComposition.vue' // 8/20 (과제2 - Weather Composition)
+import WeatherParent from './components/HandsOn/WeatherComponent/WeatherParent.vue'
 </script>
 
 <template>
-  <WeatherMockup />
-</template> -->
+  <!-- <WeatherMockup1 />
+  <WeatherComposition />  -->
+  <WeatherParent />
+</template>
