@@ -10,7 +10,7 @@ const handleBox = () => {
 const handleChild1 = () => {
     alert('1번 자식 클릭!')
 }
-const handleChild2 = () => {
+const handleChild2 = (e) => {
     alert('2번 자식(나만 켜짐) 클릭!')
 e.stopPropagation()
 }

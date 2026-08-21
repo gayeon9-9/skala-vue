@@ -70,28 +70,6 @@ const statusBarMessage = computed(() => {
   return selectedCityInfo.value
 })
 
-// 대륙 변경 시 하단의 안내 문구도 변경
-const changeContinent = (continent) => {
-  selectedContinent.value = continent
-
-  if (continent === '전체') {
-    selectedCityInfo.value = '전체 대륙의 도시를 표시합니다.'
-  } else {
-    selectedCityInfo.value = `${continent} 도시를 표시합니다.`
-  }
-}
-
-// 여행 목적 변경 시 하단의 안내 문구도 변경
-const changePurpose = (purpose) => {
-  selectedPurpose.value = purpose
-
-  if (purpose === '전체') {
-    selectedCityInfo.value = '모든 여행 목적의 도시를 표시합니다.'
-  } else {
-    selectedCityInfo.value = `${purpose} 조건에 맞는 도시를 표시합니다.`
-  }
-}
-
 const updateSearchQuery = (value) => { searchQuery.value = value }
 const updateContinent = (value) => { selectedContinent.value = value }
 const updatePurpose = (value) => { selectedPurpose.value = value }
