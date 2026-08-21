@@ -1,5 +1,7 @@
 # 어디로 갈까?
 
+배포 주소: [https://skala-vue-phi-two.vercel.app/](https://skala-vue-phi-two.vercel.app/)
+
 ## 프로젝트 소개
 
 `어디로 갈까?`는 Weather Hands-on을 순서대로 진행하면서 만든 날씨 기반 여행지 추천 서비스입니다.
@@ -21,7 +23,7 @@
 | Weather Store | View마다 따로 가지고 있던 상태 | 단위와 여행지 선택 과정을 Pinia로 공유 |
 | Weather Axios | 고정된 Mockup 날씨 | 실제 날씨·대기질·예보 API로 전환 |
 | Weather UI Library | 기본 HTML 버튼과 카드 | Element Plus와 반응형 CSS 적용 |
-| Deployment 준비 | 개발 서버에서만 확인 | 환경변수, Lint, Production Build 점검 |
+| Weather Deployment | 개발 서버에서만 확인 | 환경변수·Lint·Build 점검 후 Vercel에 배포 |
 
 ### 최종 화면에서 할 수 있는 일
 
@@ -542,7 +544,7 @@ Element Plus를 설치하고 필요한 컴포넌트를 각 Vue 파일에서 impo
 
 ---
 
-## Hands-on 8 - Deployment 준비
+## Hands-on 8 - Weather Deployment
 
 ### 요구사항과 구현
 
@@ -552,15 +554,23 @@ Element Plus를 설치하고 필요한 컴포넌트를 각 Vue 파일에서 impo
 
 #### 8.2 API Key 환경변수 처리
 
-실제 Key는 `.env.local`로 옮기고 `.gitignore`에서 제외했습니다. 저장소에는 값이 비어 있는 `.env.example`만 남겼습니다.
+실제 Key는 `.env.local`로 옮기고 `.gitignore`에서 제외했습니다. 저장소에는 값이 비어 있는 `.env.example`만 남겼으며, 배포할 때는 같은 이름의 `VITE_OPENWEATHER_API_KEY`를 Vercel 환경변수로 등록했습니다.
 
 #### 8.3 Production Build
 
 `npm run build`로 Vite Production Build가 완료되는지 확인했습니다. 정적 배포에서는 생성된 `dist` 폴더를 사용합니다.
 
-#### 8.4 Hosting 범위
+#### 8.4 Hosting
 
-이번 작업에서는 배포와 Git push까지 진행하지 않았습니다.
+GitHub의 `main` 브랜치를 Vercel과 연결해 정적 파일을 Hosting했습니다. Vue Router의 `/compare`, `/weather/:cityId` 같은 주소를 직접 열거나 새로고침해도 화면이 유지되도록 `vercel.json`에 SPA Rewrite 설정을 추가했습니다.
+
+- 배포 주소: [https://skala-vue-phi-two.vercel.app/](https://skala-vue-phi-two.vercel.app/)
+- 메인 화면에서 주요 도시 40곳의 실시간 날씨 갱신 확인
+- `/compare` 직접 접속과 새로고침 확인
+- 주요 도시와 API 검색 도시의 상세 페이지 및 3시간 단위 예보 확인
+- 존재하지 않는 주소에서 Vue 404 화면 확인
+
+이후에는 `main` 브랜치에 변경 내용을 Push하면 Vercel에서 새 버전을 자동으로 배포합니다.
 
 ---
 
