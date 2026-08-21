@@ -155,11 +155,38 @@ nav a:first-of-type {
 <script setup>
 // import WeatherMockup1 from './components/HandsOn/WeatherMockup1.vue' // 8/19 (과제1 - Weather Mockup)
 // import WeatherComposition from './components/HandsOn/WeatherComposition.vue' // 8/20 (과제2 - Weather Composition)
-import WeatherParent from './components/HandsOn/WeatherComponent/WeatherParent.vue'
+// import WeatherParent from './components/HandsOn/WeatherComponent/WeatherParent.vue'
+import { RouterLink, RouterView } from 'vue-router';
 </script>
 
 <template>
   <!-- <WeatherMockup1 />
-  <WeatherComposition />  -->
-  <WeatherParent />
+  <WeatherComposition /> 
+  <WeatherParent />-->
+  <div class="app-wrapper">
+    <header class="app-header">
+      <h1>🌍 어디로 갈까?</h1>
+
+      <nav class="navigation">
+        <RouterLink to="/">날씨 대시보드</RouterLink>
+        <RouterLink to="/favorites">관심 여행지</RouterLink>
+        <RouterLink to="/about">서비스 소개</RouterLink>
+      </nav>
+    </header>
+
+    <main class="main-content">
+      <RouterView />
+    </main>
+  </div>
 </template>
+
+<style scoped>
+.app-wrapper { min-height: 100vh; }
+.app-header { padding: 20px; text-align: center; border-bottom: 1px solid #ddd; }
+.app-header h1 { margin: 0 0 15px; }
+.navigation { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+.navigation a { padding: 8px 12px; color: #333; text-decoration: none; border-radius: 4px; }
+.navigation a:hover { background-color: #eef5ff; }
+.navigation a.router-link-exact-active { color: white; background-color: #1976d2; }
+.main-content { padding: 20px; }
+</style>
