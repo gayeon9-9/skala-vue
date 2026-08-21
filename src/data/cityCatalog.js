@@ -1,0 +1,48 @@
+// 최종 API 화면에서 사용하는 도시 기본 정보
+// 날씨 값은 저장하지 않고 조회에 필요한 이름과 분류만 관리한다.
+export const cityCatalog = [
+  { id: 'city_01', name: '서울', country: '대한민국', continent: '아시아', apiQuery: 'Seoul,KR' },
+  { id: 'city_02', name: '수원', country: '대한민국', continent: '아시아', apiQuery: 'Suwon,KR' },
+  { id: 'city_03', name: '부산', country: '대한민국', continent: '아시아', apiQuery: 'Busan,KR' },
+  { id: 'city_04', name: '판교', country: '대한민국', continent: '아시아', apiQuery: 'Seongnam,KR' },
+  { id: 'city_05', name: '광주', country: '대한민국', continent: '아시아', apiQuery: 'Gwangju,KR' },
+  { id: 'city_06', name: '울산', country: '대한민국', continent: '아시아', apiQuery: 'Ulsan,KR' },
+  { id: 'city_07', name: '제주', country: '대한민국', continent: '아시아', apiQuery: 'Jeju City,KR' },
+  { id: 'city_08', name: '대전', country: '대한민국', continent: '아시아', apiQuery: 'Daejeon,KR' },
+  { id: 'city_09', name: '대구', country: '대한민국', continent: '아시아', apiQuery: 'Daegu,KR' },
+  { id: 'city_10', name: '강릉', country: '대한민국', continent: '아시아', apiQuery: 'Gangneung,KR' },
+  { id: 'city_11', name: '인천', country: '대한민국', continent: '아시아', apiQuery: 'Incheon,KR' },
+  { id: 'city_12', name: '창원', country: '대한민국', continent: '아시아', apiQuery: 'Changwon,KR' },
+  { id: 'city_13', name: '전주', country: '대한민국', continent: '아시아', apiQuery: 'Jeonju,KR' },
+  { id: 'city_14', name: '청주', country: '대한민국', continent: '아시아', apiQuery: 'Cheongju,KR' },
+  { id: 'city_15', name: '포항', country: '대한민국', continent: '아시아', apiQuery: 'Pohang,KR' },
+  { id: 'city_16', name: '속초', country: '대한민국', continent: '아시아', apiQuery: 'Sokcho,KR' },
+  { id: 'city_17', name: '여수', country: '대한민국', continent: '아시아', apiQuery: 'Yeosu,KR' },
+  { id: 'city_18', name: '목포', country: '대한민국', continent: '아시아', apiQuery: 'Mokpo,KR' },
+  { id: 'city_19', name: '안동', country: '대한민국', continent: '아시아', apiQuery: 'Andong,KR' },
+  { id: 'city_20', name: '진주', country: '대한민국', continent: '아시아', apiQuery: 'Jinju,KR' },
+  { id: 'city_21', name: '서산', country: '대한민국', continent: '아시아', apiQuery: 'Seosan,KR' },
+  { id: 'city_22', name: '도쿄', country: '일본', continent: '아시아', apiQuery: 'Tokyo,JP' },
+  { id: 'city_23', name: '방콕', country: '태국', continent: '아시아', apiQuery: 'Bangkok,TH' },
+  { id: 'city_24', name: '싱가포르', country: '싱가포르', continent: '아시아', apiQuery: 'Singapore,SG' },
+  { id: 'city_25', name: '파리', country: '프랑스', continent: '유럽', apiQuery: 'Paris,FR' },
+  { id: 'city_26', name: '런던', country: '영국', continent: '유럽', apiQuery: 'London,GB' },
+  { id: 'city_27', name: '뉴욕', country: '미국', continent: '북아메리카', apiQuery: 'New York,US' },
+  { id: 'city_28', name: '로스앤젤레스', country: '미국', continent: '북아메리카', apiQuery: 'Los Angeles,US' },
+  { id: 'city_29', name: '시드니', country: '호주', continent: '오세아니아', apiQuery: 'Sydney,AU' },
+  { id: 'city_30', name: '두바이', country: '아랍에미리트', continent: '아시아', apiQuery: 'Dubai,AE' },
+  { id: 'city_31', name: '베이징', country: '중국', continent: '아시아', apiQuery: 'Beijing,CN' },
+  { id: 'city_32', name: '상하이', country: '중국', continent: '아시아', apiQuery: 'Shanghai,CN' },
+  { id: 'city_33', name: '홍콩', country: '홍콩', continent: '아시아', apiQuery: 'Hong Kong,HK' },
+  { id: 'city_34', name: '타이베이', country: '대만', continent: '아시아', apiQuery: 'Taipei,TW' },
+  { id: 'city_35', name: '하노이', country: '베트남', continent: '아시아', apiQuery: 'Hanoi,VN' },
+  { id: 'city_36', name: '마닐라', country: '필리핀', continent: '아시아', apiQuery: 'Manila,PH' },
+  { id: 'city_37', name: '뉴델리', country: '인도', continent: '아시아', apiQuery: 'New Delhi,IN' },
+  { id: 'city_38', name: '로마', country: '이탈리아', continent: '유럽', apiQuery: 'Rome,IT' },
+  { id: 'city_39', name: '베를린', country: '독일', continent: '유럽', apiQuery: 'Berlin,DE' },
+  { id: 'city_40', name: '토론토', country: '캐나다', continent: '북아메리카', apiQuery: 'Toronto,CA' },
+]
+
+// 첫 40개는 기존 과제에서 선정한 주요 도시이고 날씨는 모두 API로 조회한다.
+export const majorCityIds = cityCatalog.slice(0, 40).map((city) => city.id)
+export const skalaCityIds = ['city_04', 'city_05', 'city_06']

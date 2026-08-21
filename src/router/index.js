@@ -22,6 +22,12 @@ const routes = [
     component: () => import('../views/WeatherFavoritesView.vue'),
   },
   {
+    // 두 도시의 날씨와 대기질을 비교하는 페이지
+    path: '/compare',
+    name: 'WeatherCompare',
+    component: () => import('../views/WeatherCompareView.vue'),
+  },
+  {
     // 날씨 여행 서비스 소개 페이지
     path: '/about',
     name: 'weather-about',
@@ -60,4 +66,4 @@ export default router
 // 5. city_01에 해당하는 서울 데이터를 찾음
 // 6. 서울 날씨 정보를 상세 화면에 출력 
 
-// API 연결 이후  Mockup대신 실제 날씨 호출 에정 
+// API 연결 이후  Mockup대신 실제 날씨 호출 에정

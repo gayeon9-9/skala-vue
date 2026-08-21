@@ -20,6 +20,7 @@ const handleInput = (event) => { emit('update-query', event.target.value) }
 </template>
 
 <style scoped>
-.search-bar input { width: 100%; padding: 9px; border: 1px solid #bbb; box-sizing: border-box; }
-.search-bar p { margin: 10px 0 0; color: #555; }
+.search-bar input { width: 100%; padding: 13px 15px; color: #1e293b; background: #f8fafc; border: 1px solid #dbe4ef; border-radius: 11px; box-sizing: border-box; outline: none; transition: all 0.2s ease; }
+.search-bar input:focus { background: white; border-color: #60a5fa; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+.search-bar p { margin: 10px 2px 0; color: #64748b; font-size: 13px; }
 </style>
