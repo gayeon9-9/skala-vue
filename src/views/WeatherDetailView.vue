@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useConfigStore } from '@/stores/configStore'
 import { useWeatherStore } from '@/stores/weatherStore'
@@ -17,32 +17,67 @@ const configStore = useConfigStore()
 const weatherStore = useWeatherStore()
 const tripDecisionStore = useTripDecisionStore()
 
-// 현재 상세 페이지에 표시할 도시
-const cityData = computed(() => {
-  return [...weatherStore.dashboardCities, ...tripDecisionStore.apiCities].find((item) => item.id === route.params.cityId) || null
-})
-const isLoading = ref(false)
+// Store가 초기화된 새로고침 상황에서도 API 응답으로 다시 채울 수 있도록 별도 상태로 관리
+const cityData = ref(null)
+const isLoading = ref(true)
 const errorMessage = ref('')
-const cityForecast = computed(() => weatherStore.forecastByCityId[route.params.cityId] || [])
+const forecastErrorMessage = ref('')
+const cityForecast = computed(() => weatherStore.forecastByCityId[String(route.params.cityId || '')] || [])
 const weatherGuide = computed(() => {
   if (!cityData.value) return ''
   return getCurrentWeatherGuide(cityData.value.weatherId)
 })
 
-// 화면이 처음 만들어질 때 URL의 도시 ID로 도시 검색
-onMounted(async () => {
-  if (!cityData.value) return
+const findSavedCity = (cityId) => {
+  return [...weatherStore.dashboardCities, ...tripDecisionStore.apiCities].find((city) => city.id === cityId) || null
+}
 
+const getLoadErrorMessage = (error, hasSavedCity) => {
+  if (hasSavedCity) return '실시간 정보를 다시 불러오지 못했습니다. 마지막으로 조회한 값을 표시합니다.'
+  if (error.response?.status === 401) return 'OpenWeatherMap API Key를 확인해 주세요.'
+  return error.message || '도시의 날씨 정보를 불러오지 못했습니다.'
+}
+
+let loadSequence = 0
+
+// URL의 도시 ID가 바뀌거나 상세 주소를 새로 열 때 현재 날씨와 예보를 다시 조회
+const loadDetailCity = async (cityId) => {
+  const currentSequence = ++loadSequence
+  const savedCity = findSavedCity(cityId)
+
+  cityData.value = savedCity
   isLoading.value = true
+  errorMessage.value = ''
+  forecastErrorMessage.value = ''
+
   try {
-    if (!cityData.value.id.startsWith('api_')) await weatherStore.fetchDashboardCity(cityData.value, true)
+    const loadedCity = await weatherStore.fetchDetailCity(cityId, savedCity)
+    if (currentSequence !== loadSequence) return
+
+    cityData.value = loadedCity
+    if (loadedCity.id.startsWith('api_')) tripDecisionStore.addApiCity(loadedCity)
+  } catch (error) {
+    if (currentSequence !== loadSequence) return
+    errorMessage.value = getLoadErrorMessage(error, Boolean(savedCity))
+    isLoading.value = false
+    return
+  }
+
+  try {
     await weatherStore.fetchCityForecast(cityData.value)
   } catch {
-    errorMessage.value = '실시간 정보를 다시 불러오지 못했습니다. 마지막으로 조회한 값을 표시합니다.'
+    if (currentSequence !== loadSequence) return
+    forecastErrorMessage.value = '현재 날씨는 불러왔지만 단기예보는 확인하지 못했습니다.'
   } finally {
-    isLoading.value = false
+    if (currentSequence === loadSequence) isLoading.value = false
   }
-})
+}
+
+watch(
+  () => String(route.params.cityId || ''),
+  (cityId) => loadDetailCity(cityId),
+  { immediate: true },
+)
 
 const displayTemp = computed(() => {
   if (!cityData.value) return ''
@@ -79,6 +114,7 @@ const goHome = () => {
 
     <el-alert v-if="isLoading" title="최신 날씨와 예보를 확인하고 있습니다." type="info" show-icon :closable="false" />
     <el-alert v-if="errorMessage" :title="errorMessage" type="warning" show-icon :closable="false" />
+    <el-alert v-if="forecastErrorMessage" :title="forecastErrorMessage" type="warning" show-icon :closable="false" />
 
     <!-- URL의 ID와 일치하는 도시가 있을 때 -->
     <el-card v-if="cityData" class="detail-card" shadow="never">
@@ -115,7 +151,7 @@ const goHome = () => {
     </el-card>
 
     <!-- URL의 ID와 일치하는 도시가 없을 때 -->
-    <section v-else class="not-found">
+    <section v-else-if="!isLoading" class="not-found">
       <p>해당 도시의 날씨 정보를 찾을 수 없습니다.</p>
       <p>요청한 도시 ID: {{ route.params.cityId }}</p>
       <el-button type="info" @click="goHome">← 날씨 대시보드로 돌아가기</el-button>

@@ -35,6 +35,26 @@ const findDashboardCityId = (weather) => {
   return matchedCity?.id || ''
 }
 
+// API 검색 도시 ID에 저장된 위도와 경도를 상세 페이지에서 다시 사용
+const getCoordinatesFromApiCityId = (cityId) => {
+  if (!cityId.startsWith('api_')) return null
+
+  const coordinates = cityId.slice(4).split('_')
+  if (coordinates.length !== 2) return null
+
+  const latitude = Number(coordinates[0])
+  const longitude = Number(coordinates[1])
+  const isValidLatitude = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
+  const isValidLongitude = Number.isFinite(longitude) && longitude >= -180 && longitude <= 180
+
+  if (!isValidLatitude || !isValidLongitude) return null
+  return { latitude, longitude }
+}
+
+const hasCoordinates = (city) => {
+  return Number.isFinite(city?.latitude) && Number.isFinite(city?.longitude)
+}
+
 const getDistance = (firstLat, firstLon, secondLat, secondLon) => {
   const toRadian = (degree) => degree * Math.PI / 180
   const earthRadius = 6371
@@ -273,6 +293,48 @@ export const useWeatherStore = defineStore('weather', {
       }
     },
 
+    // 상세 URL을 직접 열어도 도시 ID를 기준으로 현재 데이터를 다시 구성
+    async fetchDetailCity(cityId, savedCity = null) {
+      const catalogCity = cityCatalog.find((city) => city.id === cityId)
+
+      if (catalogCity) {
+        await this.fetchDashboardCity(catalogCity, true)
+        return { ...catalogCity, ...this.liveWeatherByCityId[cityId] }
+      }
+
+      if (savedCity && hasCoordinates(savedCity)) {
+        return this.refreshApiCity(savedCity)
+      }
+
+      const coordinates = getCoordinatesFromApiCityId(cityId)
+      if (!coordinates) throw new Error('유효하지 않은 도시 주소입니다.')
+
+      const { latitude, longitude } = coordinates
+      const [weather, airQuality] = await Promise.all([
+        getCurrentWeather(latitude, longitude),
+        getCurrentAirQuality(latitude, longitude),
+      ])
+
+      // 지역명 조회만 실패한 경우에는 날씨 응답의 도시명으로 상세 화면을 구성
+      let locations
+      try {
+        locations = await getLocationName(latitude, longitude)
+      } catch {
+        locations = []
+      }
+
+      const location = locations[0] || null
+      const countryCode = location?.country || weather.sys?.country || ''
+
+      return {
+        id: cityId,
+        name: location?.local_names?.ko || location?.name || weather.name || '검색 도시',
+        country: getCountryName(countryCode),
+        continent: getContinentByCountryCode(countryCode),
+        ...makeLiveCityData(weather, airQuality),
+      }
+    },
+
     // 이번 세션에 저장한 API 도시를 좌표로 다시 조회해 최신 객체로 반환
     async refreshApiCity(city) {
       if (city.latitude === undefined || city.longitude === undefined) {
@@ -304,9 +366,9 @@ export const useWeatherStore = defineStore('weather', {
 
     // 상세 화면에서 사용할 도시별 단기예보 저장
     async fetchCityForecast(city) {
-      if (!city.latitude && !this.liveWeatherByCityId[city.id]) await this.fetchDashboardCity(city)
-      const liveCity = city.latitude ? city : this.liveWeatherByCityId[city.id]
-      if (!liveCity?.latitude || !liveCity?.longitude) return
+      if (!hasCoordinates(city) && !this.liveWeatherByCityId[city.id]) await this.fetchDashboardCity(city)
+      const liveCity = hasCoordinates(city) ? city : this.liveWeatherByCityId[city.id]
+      if (!hasCoordinates(liveCity)) return
 
       const forecast = await getForecast(liveCity.latitude, liveCity.longitude)
       this.forecastByCityId[city.id] = forecast.list.slice(0, 5)
