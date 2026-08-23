@@ -10,13 +10,27 @@ a,
 .green {
   text-decoration: none;
   color: var(--brand-700);
-  transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 @media (hover: hover) {
-  a:hover { color: var(--brand-600); }
+  a:hover {
+    color: var(--brand-600);
+  }
 }
 
-.el-button { min-height: 38px; font-weight: 700; letter-spacing: -0.1px; }
-.el-input__wrapper, .el-select__wrapper { border-radius: 11px; }
-.el-alert { border-radius: 13px; }
+.el-button {
+  min-height: 38px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+}
+.el-input__wrapper,
+.el-select__wrapper {
+  border-radius: 11px;
+}
+.el-alert {
+  border-radius: 13px;
+}

@@ -50,13 +50,13 @@ const router = createRouter({
 // main.js에서 사용할 수 있도록 Router 내보내기
 export default router
 
-// 
+//
 // 주소                          보여줄 화면
 // /                            WeatherHomeView.vue
 // /weather/city_01             WeatherDetailView.vue
 // /favorites                   WeatherFavoritesView.vue
 // /about                       WeatherAboutView.vue
-// /존재하지않는주소                 NotFoundView.vue 
+// /존재하지않는주소                 NotFoundView.vue
 
 // (실행 순서 예시)
 // 1. 서울 상세보기 클릭
@@ -64,6 +64,6 @@ export default router
 // 3. Router가 주소를 확인
 // 4. WeatherDetailView.vue를 화면에 표시
 // 5. city_01에 해당하는 서울 데이터를 찾음
-// 6. 서울 날씨 정보를 상세 화면에 출력 
+// 6. 서울 날씨 정보를 상세 화면에 출력
 
 // API 연결 이후  Mockup대신 실제 날씨 호출 에정

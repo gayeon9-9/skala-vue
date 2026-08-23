@@ -12,9 +12,31 @@ const router = useRouter()
 const tripDecisionStore = useTripDecisionStore()
 const weatherStore = useWeatherStore()
 
+// 새로고침 후에는 저장된 ID만 남아 있으므로, 도시 객체가 없는 관심 도시는 다시 조회한다.
+const restoreSavedFavorites = async () => {
+  const loadedCityIds = tripDecisionStore.favoriteCities.map((city) => city.id)
+  const missingCityIds = tripDecisionStore.favoriteCityIds.filter(
+    (cityId) => !loadedCityIds.includes(cityId),
+  )
+
+  const results = await Promise.allSettled(
+    missingCityIds.map((cityId) => weatherStore.fetchDetailCity(cityId)),
+  )
+  results.forEach((result) => {
+    if (result.status === 'fulfilled' && result.value.id.startsWith('api_')) {
+      tripDecisionStore.addApiCity(result.value)
+    }
+  })
+}
+
 onMounted(async () => {
-  const dashboardFavorites = tripDecisionStore.favoriteCities.filter((city) => !city.id.startsWith('api_'))
-  await Promise.allSettled(dashboardFavorites.map((city) => weatherStore.fetchDashboardCity(city, true)))
+  const dashboardFavorites = tripDecisionStore.favoriteCities.filter(
+    (city) => !city.id.startsWith('api_'),
+  )
+  await Promise.allSettled(
+    dashboardFavorites.map((city) => weatherStore.fetchDashboardCity(city, true)),
+  )
+  await restoreSavedFavorites()
 })
 
 const goHome = () => {
@@ -36,7 +58,8 @@ const goToDetail = (city) => {
     <section class="favorite-guide">
       <h3>⭐️ 관심 여행지 기능</h3>
       <p>
-        날씨 대시보드에서 마음에 드는 도시를 저장하면 이 페이지에서 저장한 도시의 날씨를 모아서 확인할 수 있습니다.
+        날씨 대시보드에서 마음에 드는 도시를 저장하면 이 페이지에서 저장한 도시의 날씨를 모아서
+        확인할 수 있습니다.
       </p>
 
       <ul>

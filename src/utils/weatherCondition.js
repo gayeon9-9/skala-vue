@@ -19,9 +19,12 @@ export const hasPrecipitation = (weatherId) => {
 export const getCurrentWeatherGuide = (weatherId) => {
   const category = getWeatherCategory(weatherId)
 
-  if (category === 'thunderstorm') return '⛈️ 현재 뇌우가 관측되고 있습니다. 낙뢰 위험이 있어 실내 일정을 권장합니다.'
+  if (category === 'thunderstorm')
+    return '⛈️ 현재 뇌우가 관측되고 있습니다. 낙뢰 위험이 있어 실내 일정을 권장합니다.'
   if (category === 'drizzle') return '🌦️ 현재 이슬비가 내리고 있습니다. 가벼운 우산을 챙겨 주세요.'
-  if (category === 'rain') return '☔ 현재 비가 내리고 있습니다. 우산과 실내 일정을 함께 준비해 주세요.'
-  if (category === 'snow') return '❄️ 현재 눈이 내리고 있습니다. 미끄러운 길과 교통 상황에 주의해 주세요.'
+  if (category === 'rain')
+    return '☔ 현재 비가 내리고 있습니다. 우산과 실내 일정을 함께 준비해 주세요.'
+  if (category === 'snow')
+    return '❄️ 현재 눈이 내리고 있습니다. 미끄러운 길과 교통 상황에 주의해 주세요.'
   return ''
 }

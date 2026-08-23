@@ -1,8 +1,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useConfigStore } from '@/stores/configStore'
 import { useTripDecisionStore } from '@/stores/tripDecisionStore'
+import { useTemperature } from '@/composables/useTemperature'
 import { useWeatherStore } from '@/stores/weatherStore'
 import { getCurrentWeatherGuide } from '@/utils/weatherCondition'
 import { ElAlert, ElButton, ElInput, ElOption, ElSelect } from 'element-plus'
@@ -13,8 +13,8 @@ import 'element-plus/es/components/option/style/css'
 import 'element-plus/es/components/select/style/css'
 
 const router = useRouter()
-const configStore = useConfigStore()
 const tripDecisionStore = useTripDecisionStore()
+const { unitSymbol, formatTemperature, formatTemperatureDifference } = useTemperature()
 const weatherStore = useWeatherStore()
 const cityList = computed(() => {
   const cities = [...tripDecisionStore.apiCities, ...weatherStore.dashboardCities]
@@ -46,7 +46,14 @@ const selectedCriterion = computed({
   set: (purpose) => tripDecisionStore.setPurpose(purpose),
 })
 
-const comparisonCriteria = ['선택 안 함', '쾌적한 도시', '더위 피하기', '추위 피하기', '비 피하기', '대기질 좋은 곳']
+const comparisonCriteria = [
+  '선택 안 함',
+  '쾌적한 도시',
+  '더위 피하기',
+  '추위 피하기',
+  '비 피하기',
+  '대기질 좋은 곳',
+]
 const hasComparisonCriterion = computed(() => selectedCriterion.value !== '선택 안 함')
 
 // 첫 번째 도시를 바꿨을 때 두 도시가 같아지는 경우 방지
@@ -87,9 +94,10 @@ const searchCityFromApi = async (position) => {
 
     const otherCityId = position === 'first' ? secondCityId.value : firstCityId.value
     const otherCity = cityList.value.find((item) => item.id === otherCityId)
-    const isSameLocation = otherCity
-      && Math.abs(city.latitude - otherCity.latitude) < 0.03
-      && Math.abs(city.longitude - otherCity.longitude) < 0.03
+    const isSameLocation =
+      otherCity &&
+      Math.abs(city.latitude - otherCity.latitude) < 0.03 &&
+      Math.abs(city.longitude - otherCity.longitude) < 0.03
 
     if (city.id === otherCityId || isSameLocation) {
       setMessage('같은 도시를 두 번 선택할 수 없습니다.')
@@ -129,10 +137,14 @@ const clearSelectedCity = (position) => {
 // 비교 대상으로 고른 도시는 최신 API 값으로 다시 확인
 watch([firstCityId, secondCityId], async ([firstId, secondId]) => {
   const selectedIds = [firstId, secondId].filter((cityId) => cityId)
-  await Promise.allSettled(selectedIds.map((cityId) => {
-    const city = cityList.value.find((item) => item.id === cityId)
-    return city && !city.id.startsWith('api_') ? weatherStore.fetchDashboardCity(city, true) : Promise.resolve()
-  }))
+  await Promise.allSettled(
+    selectedIds.map((cityId) => {
+      const city = cityList.value.find((item) => item.id === cityId)
+      return city && !city.id.startsWith('api_')
+        ? weatherStore.fetchDashboardCity(city, true)
+        : Promise.resolve()
+    }),
+  )
 })
 
 // 선택한 ID에 해당하는 도시 정보
@@ -148,16 +160,6 @@ const secondCity = computed(() => {
   return cityList.value.find((item) => item.id === secondCityId.value)
 })
 
-const formatTemperature = (temperature) => {
-  if (configStore.unit === 'fahrenheit') return Math.round((temperature * 9) / 5 + 32)
-  return temperature
-}
-
-const formatTemperatureDifference = (temperature) => {
-  if (configStore.unit === 'fahrenheit') return (temperature * 9 / 5).toFixed(1)
-  return temperature.toFixed(1)
-}
-
 const formatAirDifference = (value) => Math.round(value * 10) / 10
 
 const connectCityNames = (firstName, secondName) => {
@@ -172,8 +174,10 @@ const getWarnings = (city) => {
   const weatherGuide = getCurrentWeatherGuide(city.weatherId)
 
   if (weatherGuide) warnings.push(weatherGuide)
-  if (city.feelsLike >= 38) warnings.push(`체감 ${formatTemperature(city.feelsLike)}${configStore.unitSymbol}: 극심한 폭염 주의`)
-  else if (city.feelsLike >= 33) warnings.push(`체감 ${formatTemperature(city.feelsLike)}${configStore.unitSymbol}: 야외 활동 주의`)
+  if (city.feelsLike >= 38)
+    warnings.push(`체감 ${formatTemperature(city.feelsLike)}${unitSymbol}: 극심한 폭염 주의`)
+  else if (city.feelsLike >= 33)
+    warnings.push(`체감 ${formatTemperature(city.feelsLike)}${unitSymbol}: 야외 활동 주의`)
   if (city.pm10 > 80 || city.pm25 > 35) warnings.push('대기질 나쁨: 야외 활동 주의')
   if (warnings.length === 0) warnings.push('특별한 주의사항 없음')
 
@@ -193,12 +197,15 @@ const secondEvaluation = computed(() => {
 })
 
 const comparisonResult = computed(() => {
-  if (!firstCity.value || !secondCity.value || !firstEvaluation.value || !secondEvaluation.value) return null
+  if (!firstCity.value || !secondCity.value || !firstEvaluation.value || !secondEvaluation.value)
+    return null
 
   if (tripDecisionStore.comparisonResult.isTie) {
     return {
       title: `${connectCityNames(firstCity.value.name, secondCity.value.name)}의 적합도가 같습니다.`,
-      reasons: [`두 도시 모두 ${selectedCriterion.value} 기준 ${firstEvaluation.value.score}점입니다.`],
+      reasons: [
+        `두 도시 모두 ${selectedCriterion.value} 기준 ${firstEvaluation.value.score}점입니다.`,
+      ],
     }
   }
 
@@ -207,18 +214,31 @@ const comparisonResult = computed(() => {
   const otherCity = firstIsBetter ? secondCity.value : firstCity.value
   const reasons = []
 
-  if (betterCity.status !== otherCity.status) reasons.push(`날씨: ${betterCity.name} ${betterCity.status} / ${otherCity.name} ${otherCity.status}`)
+  if (betterCity.status !== otherCity.status)
+    reasons.push(
+      `날씨: ${betterCity.name} ${betterCity.status} / ${otherCity.name} ${otherCity.status}`,
+    )
 
   if (selectedCriterion.value === '더위 피하기' && betterCity.feelsLike < otherCity.feelsLike) {
-    reasons.push(`체감온도: ${otherCity.name}보다 ${formatTemperatureDifference(otherCity.feelsLike - betterCity.feelsLike)}${configStore.unitSymbol} 낮음`)
+    reasons.push(
+      `체감온도: ${otherCity.name}보다 ${formatTemperatureDifference(otherCity.feelsLike - betterCity.feelsLike)}${unitSymbol} 낮음`,
+    )
   } else if (selectedCriterion.value === '추위 피하기') {
-    reasons.push(`체감온도 ${formatTemperature(betterCity.feelsLike)}${configStore.unitSymbol}: 더 따뜻한 조건`)
+    reasons.push(`체감온도 ${formatTemperature(betterCity.feelsLike)}${unitSymbol}: 더 따뜻한 조건`)
   } else if (betterCity.feelsLike !== otherCity.feelsLike) {
-    reasons.push(`체감온도 ${formatTemperature(betterCity.feelsLike)}${configStore.unitSymbol}: 선택 기준에 더 적합`)
+    reasons.push(
+      `체감온도 ${formatTemperature(betterCity.feelsLike)}${unitSymbol}: 선택 기준에 더 적합`,
+    )
   }
 
-  if (betterCity.pm10 < otherCity.pm10) reasons.push(`미세먼지: ${otherCity.name}보다 ${formatAirDifference(otherCity.pm10 - betterCity.pm10)}㎍/㎥ 낮음`)
-  if (betterCity.pm25 < otherCity.pm25) reasons.push(`초미세먼지: ${otherCity.name}보다 ${formatAirDifference(otherCity.pm25 - betterCity.pm25)}㎍/㎥ 낮음`)
+  if (betterCity.pm10 < otherCity.pm10)
+    reasons.push(
+      `미세먼지: ${otherCity.name}보다 ${formatAirDifference(otherCity.pm10 - betterCity.pm10)}㎍/㎥ 낮음`,
+    )
+  if (betterCity.pm25 < otherCity.pm25)
+    reasons.push(
+      `초미세먼지: ${otherCity.name}보다 ${formatAirDifference(otherCity.pm25 - betterCity.pm25)}㎍/㎥ 낮음`,
+    )
   if (reasons.length === 0) reasons.push('항목별 가중 점수 우세')
 
   return {
@@ -248,7 +268,12 @@ const goHome = () => {
     <section class="criterion-selector">
       <label for="comparison-criterion">비교 기준</label>
       <el-select id="comparison-criterion" v-model="selectedCriterion">
-        <el-option v-for="criterion in comparisonCriteria" :key="criterion" :label="criterion" :value="criterion" />
+        <el-option
+          v-for="criterion in comparisonCriteria"
+          :key="criterion"
+          :label="criterion"
+          :value="criterion"
+        />
       </el-select>
     </section>
 
@@ -257,14 +282,25 @@ const goHome = () => {
         <label for="first-city-search">첫 번째 도시</label>
         <p class="search-help">도시명을 입력하면 OpenWeatherMap에서 바로 찾아 선택합니다.</p>
         <div class="api-search-row">
-          <el-input id="first-city-search" v-model="firstSearchQuery" clearable placeholder="예: Barcelona, Honolulu" @keyup.enter="searchCityFromApi('first')" />
-          <el-button type="primary" :loading="isApiSearching" @click="searchCityFromApi('first')">검색하고 선택</el-button>
+          <el-input
+            id="first-city-search"
+            v-model="firstSearchQuery"
+            clearable
+            placeholder="예: Barcelona, Honolulu"
+            @keyup.enter="searchCityFromApi('first')"
+          />
+          <el-button type="primary" :loading="isApiSearching" @click="searchCityFromApi('first')"
+            >검색하고 선택</el-button
+          >
         </div>
         <div v-if="firstCity" class="selected-city">
           <div>
             <span>선택됨</span>
             <strong>{{ firstCity.country }} · {{ firstCity.name }}</strong>
-            <small>{{ firstCity.status }} · {{ formatTemperature(firstCity.temp) }}{{ configStore.unitSymbol }}</small>
+            <small
+              >{{ firstCity.status }} · {{ formatTemperature(firstCity.temp)
+              }}{{ unitSymbol }}</small
+            >
           </div>
           <el-button size="small" plain @click="clearSelectedCity('first')">선택 해제</el-button>
         </div>
@@ -275,14 +311,30 @@ const goHome = () => {
         <label for="second-city-search">두 번째 도시</label>
         <p class="search-help">첫 번째 도시와 다른 도시를 검색해 주세요.</p>
         <div class="api-search-row">
-          <el-input id="second-city-search" v-model="secondSearchQuery" clearable placeholder="예: Lisbon, Interlaken" :disabled="!firstCityId" @keyup.enter="searchCityFromApi('second')" />
-          <el-button type="primary" :loading="isApiSearching" :disabled="!firstCityId" @click="searchCityFromApi('second')">검색하고 선택</el-button>
+          <el-input
+            id="second-city-search"
+            v-model="secondSearchQuery"
+            clearable
+            placeholder="예: Lisbon, Interlaken"
+            :disabled="!firstCityId"
+            @keyup.enter="searchCityFromApi('second')"
+          />
+          <el-button
+            type="primary"
+            :loading="isApiSearching"
+            :disabled="!firstCityId"
+            @click="searchCityFromApi('second')"
+            >검색하고 선택</el-button
+          >
         </div>
         <div v-if="secondCity" class="selected-city">
           <div>
             <span>선택됨</span>
             <strong>{{ secondCity.country }} · {{ secondCity.name }}</strong>
-            <small>{{ secondCity.status }} · {{ formatTemperature(secondCity.temp) }}{{ configStore.unitSymbol }}</small>
+            <small
+              >{{ secondCity.status }} · {{ formatTemperature(secondCity.temp)
+              }}{{ unitSymbol }}</small
+            >
           </div>
           <el-button size="small" plain @click="clearSelectedCity('second')">선택 해제</el-button>
         </div>
@@ -301,20 +353,52 @@ const goHome = () => {
             </tr>
           </thead>
           <tbody>
-            <tr><th>대륙</th><td>{{ firstCity.continent }}</td><td>{{ secondCity.continent }}</td></tr>
-            <tr><th>날씨 상태</th><td>{{ firstCity.status }}</td><td>{{ secondCity.status }}</td></tr>
-            <tr><th>현재 기온</th><td>{{ formatTemperature(firstCity.temp) }}{{ configStore.unitSymbol }}</td><td>{{ formatTemperature(secondCity.temp) }}{{ configStore.unitSymbol }}</td></tr>
-            <tr><th>체감온도</th><td>{{ formatTemperature(firstCity.feelsLike) }}{{ configStore.unitSymbol }}</td><td>{{ formatTemperature(secondCity.feelsLike) }}{{ configStore.unitSymbol }}</td></tr>
-            <tr><th>습도</th><td>{{ firstCity.humidity }}%</td><td>{{ secondCity.humidity }}%</td></tr>
-            <tr><th>미세먼지</th><td>{{ firstCity.pm10 }}㎍/㎥</td><td>{{ secondCity.pm10 }}㎍/㎥</td></tr>
-            <tr><th>초미세먼지</th><td>{{ firstCity.pm25 }}㎍/㎥</td><td>{{ secondCity.pm25 }}㎍/㎥</td></tr>
+            <tr>
+              <th>대륙</th>
+              <td>{{ firstCity.continent }}</td>
+              <td>{{ secondCity.continent }}</td>
+            </tr>
+            <tr>
+              <th>날씨 상태</th>
+              <td>{{ firstCity.status }}</td>
+              <td>{{ secondCity.status }}</td>
+            </tr>
+            <tr>
+              <th>현재 기온</th>
+              <td>{{ formatTemperature(firstCity.temp) }}{{ unitSymbol }}</td>
+              <td>{{ formatTemperature(secondCity.temp) }}{{ unitSymbol }}</td>
+            </tr>
+            <tr>
+              <th>체감온도</th>
+              <td>{{ formatTemperature(firstCity.feelsLike) }}{{ unitSymbol }}</td>
+              <td>{{ formatTemperature(secondCity.feelsLike) }}{{ unitSymbol }}</td>
+            </tr>
+            <tr>
+              <th>습도</th>
+              <td>{{ firstCity.humidity }}%</td>
+              <td>{{ secondCity.humidity }}%</td>
+            </tr>
+            <tr>
+              <th>미세먼지</th>
+              <td>{{ firstCity.pm10 }}㎍/㎥</td>
+              <td>{{ secondCity.pm10 }}㎍/㎥</td>
+            </tr>
+            <tr>
+              <th>초미세먼지</th>
+              <td>{{ firstCity.pm25 }}㎍/㎥</td>
+              <td>{{ secondCity.pm25 }}㎍/㎥</td>
+            </tr>
           </tbody>
         </table>
       </div>
 
       <div class="detail-buttons">
-        <el-button type="primary" plain @click="goToDetail(firstCity.id)">{{ firstCity.name }} 상세보기</el-button>
-        <el-button type="primary" plain @click="goToDetail(secondCity.id)">{{ secondCity.name }} 상세보기</el-button>
+        <el-button type="primary" plain @click="goToDetail(firstCity.id)"
+          >{{ firstCity.name }} 상세보기</el-button
+        >
+        <el-button type="primary" plain @click="goToDetail(secondCity.id)"
+          >{{ secondCity.name }} 상세보기</el-button
+        >
       </div>
 
       <div v-if="hasComparisonCriterion && comparisonResult" class="comparison-result">
@@ -324,14 +408,24 @@ const goHome = () => {
           <div>
             <strong>{{ firstCity.country }} · {{ firstCity.name }}</strong>
             <p class="total-score">{{ firstEvaluation.score }}점</p>
-            <p>날씨 {{ firstEvaluation.weatherScore }}점 · 체감온도 {{ firstEvaluation.temperatureScore }}점</p>
-            <p>대기질 {{ firstEvaluation.airScore }}점 · 습도 {{ firstEvaluation.humidityScore }}점</p>
+            <p>
+              날씨 {{ firstEvaluation.weatherScore }}점 · 체감온도
+              {{ firstEvaluation.temperatureScore }}점
+            </p>
+            <p>
+              대기질 {{ firstEvaluation.airScore }}점 · 습도 {{ firstEvaluation.humidityScore }}점
+            </p>
           </div>
           <div>
             <strong>{{ secondCity.country }} · {{ secondCity.name }}</strong>
             <p class="total-score">{{ secondEvaluation.score }}점</p>
-            <p>날씨 {{ secondEvaluation.weatherScore }}점 · 체감온도 {{ secondEvaluation.temperatureScore }}점</p>
-            <p>대기질 {{ secondEvaluation.airScore }}점 · 습도 {{ secondEvaluation.humidityScore }}점</p>
+            <p>
+              날씨 {{ secondEvaluation.weatherScore }}점 · 체감온도
+              {{ secondEvaluation.temperatureScore }}점
+            </p>
+            <p>
+              대기질 {{ secondEvaluation.airScore }}점 · 습도 {{ secondEvaluation.humidityScore }}점
+            </p>
           </div>
         </div>
 
@@ -359,10 +453,24 @@ const goHome = () => {
         <small>‘{{ selectedCriterion }}’ 기준별 가중치를 적용한 100점 결과입니다.</small>
       </div>
 
-      <el-alert v-else title="현재는 날씨 정보만 비교하고 있습니다. 추천 결과가 필요하면 비교 기준을 선택해 주세요." type="info" show-icon :closable="false" class="criterion-guide" />
+      <el-alert
+        v-else
+        title="현재는 날씨 정보만 비교하고 있습니다. 추천 결과가 필요하면 비교 기준을 선택해 주세요."
+        type="info"
+        show-icon
+        :closable="false"
+        class="criterion-guide"
+      />
     </section>
 
-    <el-alert v-else title="비교할 도시 두 곳을 선택해 주세요." type="info" show-icon :closable="false" class="select-guide" />
+    <el-alert
+      v-else
+      title="비교할 도시 두 곳을 선택해 주세요."
+      type="info"
+      show-icon
+      :closable="false"
+      class="select-guide"
+    />
 
     <el-button type="info" @click="goHome">← 날씨 대시보드로 돌아가기</el-button>
   </main>

@@ -156,7 +156,7 @@ nav a:first-of-type {
 // import WeatherMockup1 from './components/HandsOn/WeatherMockup1.vue' // 8/19 (과제1 - Weather Mockup)
 // import WeatherComposition from './components/HandsOn/WeatherComposition.vue' // 8/20 (과제2 - Weather Composition)
 // import WeatherParent from './components/HandsOn/WeatherComponent/WeatherParent.vue'
-import { RouterLink, RouterView } from 'vue-router';
+import { RouterLink, RouterView } from 'vue-router'
 import UnitToggler from './components/HandsOn/WeatherComponent/UnitToggler.vue'
 
 // 로고를 누르면 메인 주소로 다시 접속하여 화면 상태도 함께 초기화한다.
@@ -196,20 +196,143 @@ const homeUrl = import.meta.env.BASE_URL
 </template>
 
 <style scoped>
-.app-wrapper { min-height: 100vh; }
-.app-header { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 28px; padding: 15px max(24px, calc((100vw - 1180px) / 2)); color: var(--brand-950); background: rgba(250, 253, 255, 0.88); border-bottom: 1px solid rgba(111, 151, 189, 0.2); box-shadow: 0 10px 34px rgba(37, 79, 120, 0.08); backdrop-filter: blur(20px) saturate(145%); }
-.app-header::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(39, 133, 211, .35), transparent); content: ''; }
-.brand-area { display: flex; align-items: center; gap: 12px; min-width: max-content; color: inherit; text-align: left; text-decoration: none; }
-.brand-area:hover .brand-icon { transform: rotate(-8deg) scale(1.04); }
-.brand-icon { display: grid; width: 50px; height: 50px; place-items: center; font-size: 29px; background: linear-gradient(145deg, #dff3ff, #e4fff7); border: 1px solid rgba(63, 152, 211, 0.18); border-radius: 17px; box-shadow: 0 9px 22px rgba(43, 123, 181, .14), inset 0 1px rgba(255, 255, 255, .85); transition: transform .2s ease; }
-.app-header h1 { margin: 0; font-size: 22px; font-weight: 850; letter-spacing: -0.7px; }
-.app-header p { margin: 1px 0 0; color: var(--slate-500); font-size: 12px; }
-.header-controls { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 14px; }
-.navigation { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; padding: 5px; background: rgba(229, 238, 247, .7); border: 1px solid rgba(135, 160, 187, .14); border-radius: 14px; }
-.navigation a { padding: 9px 14px; color: #4b5f75; text-decoration: none; border-radius: 10px; font-size: 14px; font-weight: 700; transition: color .2s ease, background .2s ease, transform .2s ease, box-shadow .2s ease; }
-.navigation a:hover { color: var(--brand-700); background: rgba(255, 255, 255, .9); transform: translateY(-1px); }
-.navigation a.router-link-exact-active { color: white; background: linear-gradient(135deg, var(--brand-700), var(--brand-500)); box-shadow: 0 7px 18px rgba(35, 120, 192, 0.25); }
-.main-content { padding: 38px 24px 72px; }
-@media (max-width: 960px) { .app-header { position: static; align-items: flex-start; flex-direction: column; padding: 16px 20px; } .header-controls { width: 100%; justify-content: space-between; } }
-@media (max-width: 680px) { .brand-area p { display: none; } .header-controls { align-items: stretch; flex-direction: column; } .navigation { display: grid; width: 100%; grid-template-columns: 1fr 1fr; } .navigation a { text-align: center; } .main-content { padding: 24px 14px 52px; } }
+.app-wrapper {
+  min-height: 100vh;
+}
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 15px max(24px, calc((100vw - 1180px) / 2));
+  color: var(--brand-950);
+  background: rgba(250, 253, 255, 0.88);
+  border-bottom: 1px solid rgba(111, 151, 189, 0.2);
+  box-shadow: 0 10px 34px rgba(37, 79, 120, 0.08);
+  backdrop-filter: blur(20px) saturate(145%);
+}
+.app-header::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(39, 133, 211, 0.35), transparent);
+  content: '';
+}
+.brand-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: max-content;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+.brand-area:hover .brand-icon {
+  transform: rotate(-8deg) scale(1.04);
+}
+.brand-icon {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  place-items: center;
+  font-size: 29px;
+  background: linear-gradient(145deg, #dff3ff, #e4fff7);
+  border: 1px solid rgba(63, 152, 211, 0.18);
+  border-radius: 17px;
+  box-shadow:
+    0 9px 22px rgba(43, 123, 181, 0.14),
+    inset 0 1px rgba(255, 255, 255, 0.85);
+  transition: transform 0.2s ease;
+}
+.app-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 850;
+  letter-spacing: -0.7px;
+}
+.app-header p {
+  margin: 1px 0 0;
+  color: var(--slate-500);
+  font-size: 12px;
+}
+.header-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.navigation {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 5px;
+  background: rgba(229, 238, 247, 0.7);
+  border: 1px solid rgba(135, 160, 187, 0.14);
+  border-radius: 14px;
+}
+.navigation a {
+  padding: 9px 14px;
+  color: #4b5f75;
+  text-decoration: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.navigation a:hover {
+  color: var(--brand-700);
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+.navigation a.router-link-exact-active {
+  color: white;
+  background: linear-gradient(135deg, var(--brand-700), var(--brand-500));
+  box-shadow: 0 7px 18px rgba(35, 120, 192, 0.25);
+}
+.main-content {
+  padding: 38px 24px 72px;
+}
+@media (max-width: 960px) {
+  .app-header {
+    position: static;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 16px 20px;
+  }
+  .header-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+@media (max-width: 680px) {
+  .brand-area p {
+    display: none;
+  }
+  .header-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .navigation {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+  }
+  .navigation a {
+    text-align: center;
+  }
+  .main-content {
+    padding: 24px 14px 52px;
+  }
+}
 </style>

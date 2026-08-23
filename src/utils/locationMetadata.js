@@ -8,16 +8,20 @@ const continentCountryCodes = {
   오세아니아: `AS AU CC CK CX FJ PF GU KI MH FM NR NC NZ NU NF MP PW PG PN WS SB TK TO TV UM VU WF`,
 }
 
-const continentByCountryCode = Object.entries(continentCountryCodes).reduce((result, [continent, codes]) => {
-  codes.split(' ').forEach((code) => {
-    result[code] = continent
-  })
-  return result
-}, {})
+const continentByCountryCode = Object.entries(continentCountryCodes).reduce(
+  (result, [continent, codes]) => {
+    codes.split(' ').forEach((code) => {
+      result[code] = continent
+    })
+    return result
+  },
+  {},
+)
 
-const countryNames = typeof Intl !== 'undefined' && Intl.DisplayNames
-  ? new Intl.DisplayNames(['ko'], { type: 'region' })
-  : null
+const countryNames =
+  typeof Intl !== 'undefined' && Intl.DisplayNames
+    ? new Intl.DisplayNames(['ko'], { type: 'region' })
+    : null
 
 export const getContinentByCountryCode = (countryCode) => {
   return continentByCountryCode[countryCode?.toUpperCase()] || '기타'

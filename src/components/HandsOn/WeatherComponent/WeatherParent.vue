@@ -18,7 +18,13 @@ const selectedPurpose = ref('전체')
 
 // 기본적인 쾌적한 여행 도시 조건
 const isRecommended = (item) => {
-  return !item.status.includes('비') && item.feelsLike >= 18 && item.feelsLike < 30 && item.pm10 <= 60 && item.pm25 <= 35
+  return (
+    !item.status.includes('비') &&
+    item.feelsLike >= 18 &&
+    item.feelsLike < 30 &&
+    item.pm10 <= 60 &&
+    item.pm25 <= 35
+  )
 }
 
 // 도시 이름 검색
@@ -43,19 +49,35 @@ const displayedWeatherList = computed(() => {
   }
 
   if (selectedPurpose.value === '더위 피하기') {
-    return cityList.filter((item) => !item.status.includes('비') && item.feelsLike < 25 && item.pm10 <= 80 && item.pm25 <= 35)
+    return cityList.filter(
+      (item) =>
+        !item.status.includes('비') && item.feelsLike < 25 && item.pm10 <= 80 && item.pm25 <= 35,
+    )
   }
 
   if (selectedPurpose.value === '추위 피하기') {
-    return cityList.filter((item) => !item.status.includes('비') && item.feelsLike >= 25 && item.feelsLike < 30 && item.pm10 <= 80 && item.pm25 <= 35)
+    return cityList.filter(
+      (item) =>
+        !item.status.includes('비') &&
+        item.feelsLike >= 25 &&
+        item.feelsLike < 30 &&
+        item.pm10 <= 80 &&
+        item.pm25 <= 35,
+    )
   }
 
   if (selectedPurpose.value === '비 피하기') {
-    return cityList.filter((item) => !item.status.includes('비') && item.feelsLike < 33 && item.pm10 <= 80 && item.pm25 <= 35)
+    return cityList.filter(
+      (item) =>
+        !item.status.includes('비') && item.feelsLike < 33 && item.pm10 <= 80 && item.pm25 <= 35,
+    )
   }
 
   if (selectedPurpose.value === '대기질 좋은 곳') {
-    return cityList.filter((item) => !item.status.includes('비') && item.feelsLike < 33 && item.pm10 <= 30 && item.pm25 <= 15)
+    return cityList.filter(
+      (item) =>
+        !item.status.includes('비') && item.feelsLike < 33 && item.pm10 <= 30 && item.pm25 <= 15,
+    )
   }
 
   return cityList
@@ -70,16 +92,24 @@ const statusBarMessage = computed(() => {
   return selectedCityInfo.value
 })
 
-const updateSearchQuery = (value) => { searchQuery.value = value }
-const updateContinent = (value) => { selectedContinent.value = value }
-const updatePurpose = (value) => { selectedPurpose.value = value }
+const updateSearchQuery = (value) => {
+  searchQuery.value = value
+}
+const updateContinent = (value) => {
+  selectedContinent.value = value
+}
+const updatePurpose = (value) => {
+  selectedPurpose.value = value
+}
 const selectCity = (city) => {
   selectedCityId.value = city.id
   selectedCityInfo.value = `${city.country} ${city.name} 도시를 선택했습니다.`
 }
 
 const showDetail = (city) => {
-  window.alert(`${city.country} ${city.name}\n대륙: ${city.continent}\n날씨: ${city.status}\n기온: ${city.temp}°C\n체감온도: ${city.feelsLike}°C\n습도: ${city.humidity}%\n미세먼지: ${city.pm10}㎍/㎥\n초미세먼지: ${city.pm25}㎍/㎥`)
+  window.alert(
+    `${city.country} ${city.name}\n대륙: ${city.continent}\n날씨: ${city.status}\n기온: ${city.temp}°C\n체감온도: ${city.feelsLike}°C\n습도: ${city.humidity}%\n미세먼지: ${city.pm10}㎍/㎥\n초미세먼지: ${city.pm25}㎍/㎥`,
+  )
 }
 
 watch(selectedCityInfo, (newInfo, oldInfo) => {
@@ -146,17 +176,49 @@ watch(selectedPurpose, (newValue) => {
 
     <div class="status-bar">{{ statusBarMessage }}</div>
 
-    <p class="notice">※ 온도 및 대기질 표시는 과제용 Mockup 데이터이며 실제 특보 및 관측값과 다를 수 있습니다.</p>
+    <p class="notice">
+      ※ 온도 및 대기질 표시는 과제용 Mockup 데이터이며 실제 특보 및 관측값과 다를 수 있습니다.
+    </p>
   </div>
 </template>
 
 <style scoped>
-.dashboard-wrapper { max-width: 760px; margin: 0 auto; padding: 20px; color: #222; font-family: Arial, sans-serif; }
-.dashboard-header { margin-bottom: 20px; }
-.dashboard-header h2 { margin: 0 0 8px; }
-.dashboard-header p { margin: 0; color: #666; }
-.weather-grid { display: grid; gap: 10px; }
-.status-bar { padding: 12px; color: #1b5e20; text-align: center; background-color: #e8f5e9; border-radius: 5px; }
-.no-result { padding: 20px; color: #777; text-align: center; }
-.notice { color: #777; font-size: 12px; text-align: center; }
+.dashboard-wrapper {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px;
+  color: #222;
+  font-family: Arial, sans-serif;
+}
+.dashboard-header {
+  margin-bottom: 20px;
+}
+.dashboard-header h2 {
+  margin: 0 0 8px;
+}
+.dashboard-header p {
+  margin: 0;
+  color: #666;
+}
+.weather-grid {
+  display: grid;
+  gap: 10px;
+}
+.status-bar {
+  padding: 12px;
+  color: #1b5e20;
+  text-align: center;
+  background-color: #e8f5e9;
+  border-radius: 5px;
+}
+.no-result {
+  padding: 20px;
+  color: #777;
+  text-align: center;
+}
+.notice {
+  color: #777;
+  font-size: 12px;
+  text-align: center;
+}
 </style>

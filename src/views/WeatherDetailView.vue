@@ -1,8 +1,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useConfigStore } from '@/stores/configStore'
 import { useWeatherStore } from '@/stores/weatherStore'
+import { useTemperature } from '@/composables/useTemperature'
 import { useTripDecisionStore } from '@/stores/tripDecisionStore'
 import { getCurrentWeatherGuide } from '@/utils/weatherCondition'
 import { ElAlert, ElButton, ElCard, ElTag } from 'element-plus'
@@ -13,8 +13,8 @@ import 'element-plus/es/components/tag/style/css'
 
 const route = useRoute()
 const router = useRouter()
-const configStore = useConfigStore()
 const weatherStore = useWeatherStore()
+const { unitSymbol, formatTemperature } = useTemperature()
 const tripDecisionStore = useTripDecisionStore()
 
 // Store가 초기화된 새로고침 상황에서도 API 응답으로 다시 채울 수 있도록 별도 상태로 관리
@@ -22,18 +22,25 @@ const cityData = ref(null)
 const isLoading = ref(true)
 const errorMessage = ref('')
 const forecastErrorMessage = ref('')
-const cityForecast = computed(() => weatherStore.forecastByCityId[String(route.params.cityId || '')] || [])
+const cityForecast = computed(
+  () => weatherStore.forecastByCityId[String(route.params.cityId || '')] || [],
+)
 const weatherGuide = computed(() => {
   if (!cityData.value) return ''
   return getCurrentWeatherGuide(cityData.value.weatherId)
 })
 
 const findSavedCity = (cityId) => {
-  return [...weatherStore.dashboardCities, ...tripDecisionStore.apiCities].find((city) => city.id === cityId) || null
+  return (
+    [...weatherStore.dashboardCities, ...tripDecisionStore.apiCities].find(
+      (city) => city.id === cityId,
+    ) || null
+  )
 }
 
 const getLoadErrorMessage = (error, hasSavedCity) => {
-  if (hasSavedCity) return '실시간 정보를 다시 불러오지 못했습니다. 마지막으로 조회한 값을 표시합니다.'
+  if (hasSavedCity)
+    return '실시간 정보를 다시 불러오지 못했습니다. 마지막으로 조회한 값을 표시합니다.'
   if (error.response?.status === 401) return 'OpenWeatherMap API Key를 확인해 주세요.'
   return error.message || '도시의 날씨 정보를 불러오지 못했습니다.'
 }
@@ -79,26 +86,15 @@ watch(
   { immediate: true },
 )
 
-const displayTemp = computed(() => {
-  if (!cityData.value) return ''
-  if (configStore.unit === 'fahrenheit') return Math.round((cityData.value.temp * 9) / 5 + 32)
-  return cityData.value.temp
-})
-
-const displayFeelsLike = computed(() => {
-  if (!cityData.value) return ''
-  if (configStore.unit === 'fahrenheit') return Math.round((cityData.value.feelsLike * 9) / 5 + 32)
-  return cityData.value.feelsLike
-})
-
-const formatTemperature = (temperature) => {
-  if (configStore.unit === 'fahrenheit') return Math.round((temperature * 9) / 5 + 32)
-  return Math.round(temperature * 10) / 10
-}
+const displayTemp = computed(() => formatTemperature(cityData.value?.temp))
+const displayFeelsLike = computed(() => formatTemperature(cityData.value?.feelsLike))
 
 const formatForecastTime = (timestamp) => {
   return new Date(timestamp * 1000).toLocaleString('ko-KR', {
-    month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
@@ -112,36 +108,75 @@ const goHome = () => {
   <main class="detail-container">
     <h2>🌤️ 도시 상세 날씨</h2>
 
-    <el-alert v-if="isLoading" title="최신 날씨와 예보를 확인하고 있습니다." type="info" show-icon :closable="false" />
-    <el-alert v-if="errorMessage" :title="errorMessage" type="warning" show-icon :closable="false" />
-    <el-alert v-if="forecastErrorMessage" :title="forecastErrorMessage" type="warning" show-icon :closable="false" />
+    <el-alert
+      v-if="isLoading"
+      title="최신 날씨와 예보를 확인하고 있습니다."
+      type="info"
+      show-icon
+      :closable="false"
+    />
+    <el-alert
+      v-if="errorMessage"
+      :title="errorMessage"
+      type="warning"
+      show-icon
+      :closable="false"
+    />
+    <el-alert
+      v-if="forecastErrorMessage"
+      :title="forecastErrorMessage"
+      type="warning"
+      show-icon
+      :closable="false"
+    />
 
     <!-- URL의 ID와 일치하는 도시가 있을 때 -->
     <el-card v-if="cityData" class="detail-card" shadow="never">
       <h3>{{ cityData.country }} · {{ cityData.name }}</h3>
       <p>대륙: {{ cityData.continent }}</p>
-      <p>날씨: <strong>{{ cityData.status }}</strong></p>
-      <p>현재 기온: <strong>{{ displayTemp }}{{ configStore.unitSymbol }}</strong></p>
-      <p>체감온도: <strong>{{ displayFeelsLike }}{{ configStore.unitSymbol }}</strong></p>
-      <p>습도: <strong>{{ cityData.humidity }}%</strong></p>
-      <p>미세먼지: <strong>{{ cityData.pm10 }}㎍/㎥</strong></p>
-      <p>초미세먼지: <strong>{{ cityData.pm25 }}㎍/㎥</strong></p>
+      <p>
+        날씨: <strong>{{ cityData.status }}</strong>
+      </p>
+      <p>
+        현재 기온: <strong>{{ displayTemp }}{{ unitSymbol }}</strong>
+      </p>
+      <p>
+        체감온도: <strong>{{ displayFeelsLike }}{{ unitSymbol }}</strong>
+      </p>
+      <p>
+        습도: <strong>{{ cityData.humidity }}%</strong>
+      </p>
+      <p>
+        미세먼지: <strong>{{ cityData.pm10 }}㎍/㎥</strong>
+      </p>
+      <p>
+        초미세먼지: <strong>{{ cityData.pm25 }}㎍/㎥</strong>
+      </p>
       <p class="data-source">OpenWeatherMap API 관측값</p>
 
       <div class="travel-guide">
         <p v-if="weatherGuide">{{ weatherGuide }}</p>
-        <p v-else-if="cityData.feelsLike >= 33">🥵 체감온도가 높아 장시간 야외 활동에 주의하세요.</p>
-        <p v-else-if="cityData.pm10 > 80 || cityData.pm25 > 35">😷 대기질이 좋지 않아 야외 활동에 주의하세요.</p>
+        <p v-else-if="cityData.feelsLike >= 33">
+          🥵 체감온도가 높아 장시간 야외 활동에 주의하세요.
+        </p>
+        <p v-else-if="cityData.pm10 > 80 || cityData.pm25 > 35">
+          😷 대기질이 좋지 않아 야외 활동에 주의하세요.
+        </p>
         <p v-else>✈️ 현재 여행하기 비교적 좋은 날씨입니다.</p>
       </div>
 
       <div v-if="cityForecast.length > 0" class="forecast-area">
         <h4>3시간 단위 예보</h4>
         <div class="forecast-list">
-          <el-card v-for="forecast in cityForecast" :key="forecast.dt" shadow="hover" :body-style="{ padding: '9px' }">
+          <el-card
+            v-for="forecast in cityForecast"
+            :key="forecast.dt"
+            shadow="hover"
+            :body-style="{ padding: '9px' }"
+          >
             <strong>{{ formatForecastTime(forecast.dt) }}</strong>
             <el-tag size="small" effect="plain">{{ forecast.weather[0].description }}</el-tag>
-            <span>{{ formatTemperature(forecast.main.temp) }}{{ configStore.unitSymbol }}</span>
+            <span>{{ formatTemperature(forecast.main.temp) }}{{ unitSymbol }}</span>
             <span>강수확률 {{ Math.round((forecast.pop || 0) * 100) }}%</span>
           </el-card>
         </div>

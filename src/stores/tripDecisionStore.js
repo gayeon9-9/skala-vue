@@ -1,3 +1,4 @@
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useWeatherStore } from '@/stores/weatherStore'
 import { hasPrecipitation } from '@/utils/weatherCondition'
@@ -82,7 +83,9 @@ const getWeights = (purpose) => {
 const calculateEvaluation = (city, purpose) => {
   const weights = getWeights(purpose)
   const weatherScore = Math.round(getWeatherRatio(city.weatherId) * weights.weather)
-  const temperatureScore = Math.round(getTemperatureRatio(city.feelsLike, purpose) * weights.temperature)
+  const temperatureScore = Math.round(
+    getTemperatureRatio(city.feelsLike, purpose) * weights.temperature,
+  )
   const airRatio = (getPm10Ratio(city.pm10) + getPm25Ratio(city.pm25)) / 2
   const airScore = Math.round(airRatio * weights.air)
   const humidityScore = Math.round(getHumidityRatio(city.humidity) * weights.humidity)
@@ -96,140 +99,182 @@ const calculateEvaluation = (city, purpose) => {
   }
 }
 
+// 관심 여행지는 새로고침해도 남아 있어야 해서 브라우저 저장소에 ID만 보관한다.
+// 날씨 수치는 저장하지 않고 화면을 열 때 API로 다시 조회한다.
+const FAVORITE_STORAGE_KEY = 'travel-favorite-city-ids'
+
+const loadFavoriteCityIds = () => {
+  try {
+    const savedValue = localStorage.getItem(FAVORITE_STORAGE_KEY)
+    const savedIds = JSON.parse(savedValue || '[]')
+    return Array.isArray(savedIds) ? savedIds : []
+  } catch {
+    return []
+  }
+}
+
 // 관심 여행지부터 최종 비교까지 여행지를 고르는 과정을 관리하는 Store
-export const useTripDecisionStore = defineStore('tripDecision', {
-  state: () => ({
-    favoriteCityIds: [],
-    compareCityIds: [],
-    selectedPurpose: '선택 안 함',
-    apiCities: [],
-    dashboardSearchCityIds: [],
-  }),
+export const useTripDecisionStore = defineStore('tripDecision', () => {
+  // state
+  const favoriteCityIds = ref(loadFavoriteCityIds())
+  const compareCityIds = ref([])
+  const selectedPurpose = ref('선택 안 함')
+  const apiCities = ref([])
+  const dashboardSearchCityIds = ref([])
 
-  getters: {
-    // ID만 저장하고, 화면에서는 공통 날씨 데이터의 도시 객체를 사용
-    favoriteCities: (state) => {
-      const weatherStore = useWeatherStore()
-      const allCities = getUniqueCities([...weatherStore.dashboardCities, ...state.apiCities])
-      return allCities.filter((city) => state.favoriteCityIds.includes(city.id))
-    },
+  // 대표 도시와 검색 도시를 합친 전체 목록 (getter 여러 곳에서 사용)
+  const allCities = computed(() => {
+    const weatherStore = useWeatherStore()
+    return getUniqueCities([...weatherStore.dashboardCities, ...apiCities.value])
+  })
 
-    // 사용자가 선택한 순서대로 비교 도시 반환
-    compareCities: (state) => {
-      const weatherStore = useWeatherStore()
-      const allCities = getUniqueCities([...weatherStore.dashboardCities, ...state.apiCities])
-      return state.compareCityIds
-        .map((cityId) => allCities.find((city) => city.id === cityId))
-        .filter((city) => city)
-    },
+  // getters
+  // ID만 저장하고, 화면에서는 공통 날씨 데이터의 도시 객체를 사용
+  const favoriteCities = computed(() =>
+    allCities.value.filter((city) => favoriteCityIds.value.includes(city.id)),
+  )
 
-    // 대시보드 03에서 직접 검색한 도시만 둘러보기 목록으로 반환
-    dashboardSearchCities: (state) => {
-      return state.dashboardSearchCityIds
-        .map((cityId) => state.apiCities.find((city) => city.id === cityId))
-        .filter((city) => city)
-    },
+  // 사용자가 선택한 순서대로 비교 도시 반환
+  const compareCities = computed(() =>
+    compareCityIds.value
+      .map((cityId) => allCities.value.find((city) => city.id === cityId))
+      .filter((city) => city),
+  )
 
-    favoriteCount: (state) => state.favoriteCityIds.length,
-    compareCount: (state) => state.compareCityIds.length,
-    canCompare() {
-      return this.compareCities.length === 2
-    },
+  // 대시보드 03에서 직접 검색한 도시만 둘러보기 목록으로 반환
+  const dashboardSearchCities = computed(() =>
+    dashboardSearchCityIds.value
+      .map((cityId) => apiCities.value.find((city) => city.id === cityId))
+      .filter((city) => city),
+  )
 
-    // 두 도시가 준비되면 현재 여행 목적을 기준으로 추천 결과 계산
-    comparisonResult() {
-      if (!this.canCompare || this.selectedPurpose === '선택 안 함') return null
+  const favoriteCount = computed(() => favoriteCityIds.value.length)
+  const compareCount = computed(() => compareCityIds.value.length)
+  const canCompare = computed(() => compareCities.value.length === 2)
 
-      const [firstCity, secondCity] = this.compareCities
-      const firstEvaluation = calculateEvaluation(firstCity, this.selectedPurpose)
-      const secondEvaluation = calculateEvaluation(secondCity, this.selectedPurpose)
+  // 두 도시가 준비되면 현재 여행 목적을 기준으로 추천 결과 계산
+  const comparisonResult = computed(() => {
+    if (!canCompare.value || selectedPurpose.value === '선택 안 함') return null
 
-      if (firstEvaluation.score === secondEvaluation.score) {
-        return {
-          isTie: true,
-          recommendedCity: null,
-          firstEvaluation,
-          secondEvaluation,
-        }
-      }
+    const [firstCity, secondCity] = compareCities.value
+    const firstEvaluation = calculateEvaluation(firstCity, selectedPurpose.value)
+    const secondEvaluation = calculateEvaluation(secondCity, selectedPurpose.value)
 
-      return {
-        isTie: false,
-        recommendedCity: firstEvaluation.score > secondEvaluation.score ? firstCity : secondCity,
-        firstEvaluation,
-        secondEvaluation,
-      }
-    },
-  },
+    if (firstEvaluation.score === secondEvaluation.score) {
+      return { isTie: true, recommendedCity: null, firstEvaluation, secondEvaluation }
+    }
 
-  actions: {
-    // 40개 목록에 없던 API 검색 도시도 관심·비교 화면에서 다시 사용할 수 있게 저장
-    addApiCity(city) {
-      if (!city) return
-      const cityIndex = this.apiCities.findIndex((item) => item.id === city.id)
+    return {
+      isTie: false,
+      recommendedCity: firstEvaluation.score > secondEvaluation.score ? firstCity : secondCity,
+      firstEvaluation,
+      secondEvaluation,
+    }
+  })
 
-      if (cityIndex === -1) {
-        this.apiCities.push(city)
-      } else {
-        this.apiCities.splice(cityIndex, 1, city)
-      }
-    },
+  // actions
+  // 40개 목록에 없던 API 검색 도시도 관심·비교 화면에서 다시 사용할 수 있게 저장
+  function addApiCity(city) {
+    if (!city) return
+    const cityIndex = apiCities.value.findIndex((item) => item.id === city.id)
 
-    // 공통 API 캐시와 별도로 대시보드에서 검색한 도시 ID를 기록
-    addDashboardSearchCity(city) {
-      if (!city) return
-      this.addApiCity(city)
+    if (cityIndex === -1) {
+      apiCities.value.push(city)
+    } else {
+      apiCities.value.splice(cityIndex, 1, city)
+    }
+  }
 
-      if (!this.dashboardSearchCityIds.includes(city.id)) {
-        this.dashboardSearchCityIds.push(city.id)
-      }
-    },
+  // 공통 API 캐시와 별도로 대시보드에서 검색한 도시 ID를 기록
+  function addDashboardSearchCity(city) {
+    if (!city) return
+    addApiCity(city)
 
-    // 이미 저장한 도시는 취소하고, 새 도시는 관심 목록에 추가
-    toggleFavorite(cityId) {
-      if (this.favoriteCityIds.includes(cityId)) {
-        this.favoriteCityIds = this.favoriteCityIds.filter((id) => id !== cityId)
-        return
-      }
+    if (!dashboardSearchCityIds.value.includes(city.id)) {
+      dashboardSearchCityIds.value.push(city.id)
+    }
+  }
 
-      this.favoriteCityIds.push(cityId)
-    },
+  // 관심 목록이 바뀔 때마다 브라우저 저장소에 반영
+  function saveFavoriteCityIds() {
+    try {
+      localStorage.setItem(FAVORITE_STORAGE_KEY, JSON.stringify(favoriteCityIds.value))
+    } catch {
+      // 저장소를 사용할 수 없는 환경에서도 화면 동작은 그대로 유지한다.
+    }
+  }
 
-    // 비교 도시는 최대 두 개까지만 선택
-    toggleCompare(cityId) {
-      if (this.compareCityIds.includes(cityId)) {
-        this.removeCompare(cityId)
-        return
-      }
+  // 이미 저장한 도시는 취소하고, 새 도시는 관심 목록에 추가
+  function toggleFavorite(cityId) {
+    if (favoriteCityIds.value.includes(cityId)) {
+      favoriteCityIds.value = favoriteCityIds.value.filter((id) => id !== cityId)
+    } else {
+      favoriteCityIds.value.push(cityId)
+    }
 
-      if (this.compareCityIds.length >= 2) return
+    saveFavoriteCityIds()
+  }
 
-      this.compareCityIds.push(cityId)
-    },
+  function removeCompare(cityId) {
+    compareCityIds.value = compareCityIds.value.filter((id) => id !== cityId)
+  }
 
-    // 비교 화면의 첫 번째 또는 두 번째 도시를 직접 변경
-    setCompareCity(index, cityId) {
-      const nextCityIds = [...this.compareCityIds]
+  // 비교 도시는 최대 두 개까지만 선택
+  function toggleCompare(cityId) {
+    if (compareCityIds.value.includes(cityId)) {
+      removeCompare(cityId)
+      return
+    }
 
-      if (cityId === '') {
-        nextCityIds.splice(index, 1)
-      } else {
-        nextCityIds[index] = cityId
-      }
+    if (compareCityIds.value.length >= 2) return
 
-      this.compareCityIds = nextCityIds.filter((id, cityIndex) => id && nextCityIds.indexOf(id) === cityIndex).slice(0, 2)
-    },
+    compareCityIds.value.push(cityId)
+  }
 
-    setPurpose(purpose) {
-      this.selectedPurpose = purpose
-    },
+  // 비교 화면의 첫 번째 또는 두 번째 도시를 직접 변경
+  function setCompareCity(index, cityId) {
+    const nextCityIds = [...compareCityIds.value]
 
-    removeCompare(cityId) {
-      this.compareCityIds = this.compareCityIds.filter((id) => id !== cityId)
-    },
+    if (cityId === '') {
+      nextCityIds.splice(index, 1)
+    } else {
+      nextCityIds[index] = cityId
+    }
 
-    clearCompare() {
-      this.compareCityIds = []
-    },
-  },
+    compareCityIds.value = nextCityIds
+      .filter((id, cityIndex) => id && nextCityIds.indexOf(id) === cityIndex)
+      .slice(0, 2)
+  }
+
+  function setPurpose(purpose) {
+    selectedPurpose.value = purpose
+  }
+
+  function clearCompare() {
+    compareCityIds.value = []
+  }
+
+  return {
+    favoriteCityIds,
+    compareCityIds,
+    selectedPurpose,
+    apiCities,
+    dashboardSearchCityIds,
+    favoriteCities,
+    compareCities,
+    dashboardSearchCities,
+    favoriteCount,
+    compareCount,
+    canCompare,
+    comparisonResult,
+    addApiCity,
+    addDashboardSearchCity,
+    toggleFavorite,
+    saveFavoriteCityIds,
+    toggleCompare,
+    setCompareCity,
+    setPurpose,
+    removeCompare,
+    clearCompare,
+  }
 })

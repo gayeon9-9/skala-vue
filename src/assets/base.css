@@ -81,7 +81,9 @@
   margin: 0;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   min-width: 320px;
@@ -116,16 +118,35 @@ body {
 button,
 input,
 select,
-textarea { font: inherit; }
+textarea {
+  font: inherit;
+}
 
 button,
-a { -webkit-tap-highlight-color: transparent; }
+a {
+  -webkit-tap-highlight-color: transparent;
+}
 
-:focus-visible { outline: 3px solid rgba(39, 133, 211, 0.36); outline-offset: 3px; }
+:focus-visible {
+  outline: 3px solid rgba(39, 133, 211, 0.36);
+  outline-offset: 3px;
+}
 
-::selection { color: #fff; background: var(--brand-600); }
+::selection {
+  color: #fff;
+  background: var(--brand-600);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
